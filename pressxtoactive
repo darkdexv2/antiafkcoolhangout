@@ -1,0 +1,48 @@
+--[[
+	WARNING: Heads up! This script has not been verified by ScriptBlox. Use at your own risk!
+]]
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local VirtualUser = cloneref and cloneref(game:GetService("VirtualUser")) or game:GetService("VirtualUser")
+
+local LocalPlayer = Players.LocalPlayer
+local antiAfkEnabled = false
+local antiAfkConn
+
+local function toggleAntiAfk()
+	antiAfkEnabled = not antiAfkEnabled
+	
+	if antiAfkEnabled then
+		print("[Anti-AFK] Enabled ✅")
+
+		-- Disconnect existing AFK connections
+		local GC = getconnections or get_signal_cons
+		if GC then
+			for _, v in pairs(GC(LocalPlayer.Idled)) do
+				if v.Disable then v:Disable() elseif v.Disconnect then v:Disconnect() end
+			end
+		end
+
+		-- Connect new anti-AFK function
+		antiAfkConn = LocalPlayer.Idled:Connect(function()
+			VirtualUser:CaptureController()
+			VirtualUser:ClickButton2(Vector2.new())
+		end)
+	else
+		print("[Anti-AFK] Disabled ❌")
+		
+		if antiAfkConn then
+			antiAfkConn:Disconnect()
+			antiAfkConn = nil
+		end
+	end
+end
+
+-- Press X to toggle
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+	if input.KeyCode == Enum.KeyCode.X then
+		toggleAntiAfk()
+	end
+end)
+
